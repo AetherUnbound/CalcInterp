@@ -1,0 +1,88 @@
+//Matthew Bowden
+//CSCS 2430
+//Lab #4
+//triangle.cpp
+//Creates triangle class
+
+#include "triangle.h"
+#include <iostream>
+#include <cmath>
+
+using namespace std;
+
+//default constructor
+Triangle :: Triangle()
+{
+	sideA_ = 3;
+	sideB_ = 4;
+	sideC_ = 5;
+}
+
+//convert constructor
+Triangle :: Triangle(const double triA, const double triB, const double triC)
+{
+	if ((triA < (triB + triC)) && (triB < (triA + triC)) && (triC < (triA + triB)))
+	{
+		sideA_ = triA;
+		sideB_ = triB;
+		sideC_ = triC;
+	}
+	else
+	{
+		cout << "Error in next operation: invalid triangle, defaulting to 3, 4, 5" << endl;
+		sideA_ = 3,	sideB_ = 4, sideC_ = 5;
+	}
+}
+
+double Triangle :: getSideA() const
+{return sideA_;}
+
+double Triangle :: getSideB() const
+{return sideB_;}
+
+double Triangle :: getSideC() const
+{return sideC_;}
+
+void Triangle :: getTriangle() const
+{cout << "Triangle has sides (" << sideA_ << ", " << sideB_ << ", " << sideC_ << ")" << endl;}
+
+bool Triangle :: isRight() const
+{
+	double a, b, c;
+	//a = sideA_, b = sideB_, c = sideC_;
+	if ((sideA_ > sideB_) && (sideA_ > sideC_))
+		c = sideA_, a = sideB_, b = sideC_;
+	else if ((sideB_ > sideA_) && (sideB_ > sideC_))
+		c = sideB_, a = sideA_, b = sideC_;
+	else if ((sideC_ > sideA_) && (sideC_ > sideB_))
+		c = sideC_, a = sideA_, b = sideB_;
+	else 
+		return false;
+	if (pow(c, 2) == (pow(a, 2) + pow(b, 2)))
+		return true;
+	else
+		return false;
+}
+
+bool Triangle :: isEquilateral() const
+{
+	if ((sideA_ == sideB_) && (sideB_ == sideC_))
+		return true;
+	else
+		return false;
+}
+
+bool Triangle :: isIsosceles() const
+{
+	if ((sideA_ == sideB_) || (sideA_ == sideC_) || (sideB_ == sideC_))
+		return true;
+	else
+		return false;
+}
+
+double Triangle :: Area() const
+{
+	double HeronS = ((sideA_ + sideB_ + sideC_)/2);
+	double triArea = sqrt(HeronS * (HeronS - sideA_) * (HeronS - sideB_) * (HeronS - sideC_));
+	return triArea;
+}

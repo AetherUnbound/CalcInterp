@@ -1,0 +1,34 @@
+//Matthew Bowden
+//CSCS 2430
+//Lab #4
+//triangle.h
+//Header file with Triangle class function prototypes
+
+#ifndef _TRIANGLE_H
+#define _TRIANGLE_H
+
+#include <iostream>
+using namespace std;
+
+class Triangle 
+{
+private:
+	double sideA_, sideB_, sideC_;
+	
+public:
+	//constructors
+	Triangle();
+	Triangle(const double sideA, const double sideB, const double sideC);
+
+	//methods
+	double getSideA() const;
+	double getSideB() const;
+	double getSideC() const;
+	void getTriangle() const;
+	bool isRight() const;
+	bool isEquilateral() const;
+	bool isIsosceles() const;
+	double Area() const;
+};
+
+#endif

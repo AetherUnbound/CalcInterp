@@ -1,0 +1,113 @@
+//Matthew Bowden
+//Homework 9
+//CSC 1230
+//12-2-13
+//This program takes text in and encrypts it through a Dingler cypher
+
+#include <string>
+#include <iostream>
+#include <cmath>
+#include <fstream>
+#include <iomanip>
+
+using namespace std;
+
+//prototypes
+int getShiftNum();
+void openFile(ifstream&, ofstream&);
+void shiftFile(ifstream&, int, string&);
+void flipString(string, string&);
+void writeString(string, ofstream&);
+
+int main()
+{
+	//variable declarations
+	int shiftNum;
+	ifstream inFile;
+	ofstream outFile;
+	int lineNum;
+	string fileLine;
+	string outputLine;
+	
+	shiftNum = getShiftNum();
+	//Functions
+	openFile(inFile, outFile);
+	while (!inFile.eof())
+	{
+		shiftFile(inFile, shiftNum, fileLine);
+		//cout << fileLine << endl;
+		flipString(fileLine, outputLine);
+		//cout << outputLine << endl;
+		writeString(outputLine, outFile);
+	}
+
+	return 0;
+}
+
+//Parameters: none
+//Returns: user inputed shift number (int)
+//Gets number from user and returns it to main
+int getShiftNum()
+{
+	int num;
+	cout << "Please enter the cypher shift number: ";
+	cin >> num;
+	return num;
+}
+//Parameters: the file (reference)
+//Returns: none, but opened file by reference
+//Opens the file to be read outside of the loop
+void openFile(ifstream& input, ofstream& output)
+{
+	input.open("C:\\Users\\Aether\\Downloads\\plaintext.txt");
+	if(input.fail())
+	{
+		cout << "ERROR 1" << endl;
+		exit(1);
+	}
+	//gotta open the output file
+	output.open("C:\\Users\\Aether\\Documents\\Visual Studio 2012\\Projects\\Homework 9\\plaintextoutput.txt");
+	if (output.fail())
+	{
+		cout << "ERROR 2" << endl;
+		exit(1);
+	}
+}
+//Parameters: the file input (reference), the shift number (int), and the string (reference)
+//Returns: none by value
+//Reads, shifts, and returns the string for a line
+void shiftFile(ifstream& input, int shift, string& output)
+{
+	string fileText;
+	char textLetter;
+	//opening the file
+	input >> fileText;
+	for(int i = 0; i < fileText.length(); i++)
+	{
+		textLetter = fileText[i];
+		fileText[i] = textLetter + shift;
+	}
+	output = fileText;
+}
+
+//Parameters: string from previous function and string to return
+//Returns: flipped string
+//Accepts shifted string, flips it, and returns it
+void flipString(string original, string& flipped)
+{
+	int x = 0;
+	flipped =  original;
+	for (int i = original.length() - 1; i >= 0; i--)
+	{
+		flipped[x] = original[i];
+		x++;
+	}
+}
+
+//Parameters: flipped string and output file
+//Returns: none, but writes to file
+//Encodes the flipped string to the output file
+void writeString(string line, ofstream& file)
+{
+	file << line << endl;
+}
