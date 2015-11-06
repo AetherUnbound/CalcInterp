@@ -16,7 +16,7 @@ Token yylex(); //might be global variables here
 
 int main(int argc, char *argv[]) {
 	
-	inputFile = "read A jeff := 2 + 4 $$";
+	inputFile = "read A jeff := 2 + 4 write jeff /* comment * ** */ \n /* \n read B /**/ B := \t 2 / 5 $$";
 	currPos = inputFile.begin();
 
 	while (!endOfFile) {
@@ -98,39 +98,28 @@ Token yylex() {
 		//DIVOP & Comment checking
 		else if (*currPos == '/') {
 			currPos++; //be wary of this increment!
-			if (*currPos != '*') { //if it's a valid DIVOP
-				currPos--; //set the iterater back
+			if (*currPos != '*') { //if it's a valid DIVOP				
 				thisToken.TokenNum = DIVOP;
-				thisToken.TokenString = *currPos; //should be the '/' symbol
+				thisToken.TokenString = '/'; 
 				tokenFound = true;
 			}
 
-			//In these next statements, I use GOTO statements because I have to 
-			//go *back* to previous states, which would be difficult (impossible)
-			//with just loops
+			//Previously had GOTO statements, reimplemented with loops
 			else { //if currPos == '*'
-				currPos++;
-			FirstStar:
-				while (*currPos != '*') {
-					currPos++;
+				currPos++; 
+				bool endFound = false;
+				while (!endFound && *currPos != '\n') { //might need to revisit this to ensure functionality of newline end
+					if (*currPos != '*') {
+						currPos++;
+					}
+					else if (*currPos == '*') {
+						currPos++;
+						if (*currPos == '/') {
+							endFound = true;
+							currPos++;
+						}
+					}
 				}
-				currPos++;
-				goto SecondStar;
-			SecondStar: 
-				if (*currPos == '/') {
-					currPos++;
-					goto EndComment;
-				}
-				else if (*currPos == '*') {
-					currPos++;
-					goto SecondStar;
-				}
-				else {
-					currPos++;
-					goto FirstStar;
-				}
-			EndComment:
-				;//nothing here, just the end of the else statement
 			}
 		}
 		//NUMCONST
@@ -157,8 +146,7 @@ Token yylex() {
 							currPos++;
 							thisToken.TokenNum = READYSY;
 							thisToken.TokenString = "read";
-							tokenFound = true;
-							goto EndIDLoop;
+							tokenFound = true;							
 						}
 						else {
 							currPos--; currPos--; currPos--; //revert the last 3 increments
@@ -172,7 +160,7 @@ Token yylex() {
 					currPos--;
 				}
 			}
-			if (tolower(*currPos) == 'w') {
+			else if (tolower(*currPos) == 'w') {
 				currPos++;
 				if (tolower(*currPos) == 'r') {
 					currPos++;
@@ -184,8 +172,7 @@ Token yylex() {
 								currPos++;
 								thisToken.TokenNum = WRITESY;
 								thisToken.TokenString = "write";
-								tokenFound = true;
-								goto EndIDLoop;
+								tokenFound = true;								
 							}
 							else {
 								for (int i = 0; i < 4; i++)
@@ -206,18 +193,16 @@ Token yylex() {
 					currPos--;
 				}
 			}
-			//This might be really dumb but I think it will work
-
-			//now I have to just get an ID string
-			thisToken.TokenNum = ID;
-			do {
-				toAppend = *currPos;
-				thisToken.TokenString.append(toAppend);
-				currPos++;
-			} while (isalpha(*currPos) || isdigit(*currPos) || *currPos == '_');
-			tokenFound = true;
-		EndIDLoop: 
-			;
+			if (!tokenFound) {
+				//now I have to just get an ID string
+				thisToken.TokenNum = ID;
+				do {
+					toAppend = *currPos;
+					thisToken.TokenString.append(toAppend);
+					currPos++;
+				} while (isalpha(*currPos) || isdigit(*currPos) || *currPos == '_');
+				tokenFound = true;
+			}		
 		}
 	} while (!tokenFound);
 	cout << "Tokens: " << thisToken.TokenNum << " " << thisToken.TokenString << endl;
