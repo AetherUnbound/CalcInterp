@@ -14,27 +14,29 @@ bool endOfFile = false;
 int tokenCount = 0;
 
 Token yylex(); //might be global variables here
-void convertFiletoString(string);
+void yyconvertFiletoString(string);
 
 int main(int argc, char *argv[]) {
 	setupMap(); //sets up the map to pring ENUM names
 	
 
 	//Get the filename from the command line 
-	if (argc > 2) {
+	if (argc > 2 || argc == 1) {
 		cerr << "Usage: " << argv[0] << " FILENAME" << endl;
 		return 1;
-	}
-	else if (argc == 1) {
+	} 
+	//else if (argc == 1) {
 		//==DEBUG TESTING==
-		inputFile = "read A jeff_224 := 2 + 4 Write jeff /* comment * ** */ \n /* \n rEAd B /**/ B := \t 2 / 5 qq22qq:=1+1.5975/2 ";
-		inputFile += "sum := A + B write sum $$";
-	}
-	else {
-		string fileName = argv[1];
-		convertFiletoString(fileName);
-		cout << inputFile << endl;
-	}
+		//inputFile = "read A jeff_224 := 2.5 + 4 Write jeff /* comment * **/ \n /* \n rEAd B /**/ B := \t 2 / 5 qq22qq:=1+1.5975/2 ";
+		//inputFile += "sum := A + B write sum $$";
+	//}
+	
+	string fileName = argv[1];
+	yyconvertFiletoString(fileName);
+	cout << "====INPUT FILE====" << endl;
+	cout << inputFile << endl;
+	cout << "====SCANNER OUTPUT====" << endl;
+	
 	currPos = inputFile.begin();
 
 	while (!endOfFile) {
@@ -54,7 +56,7 @@ int main(int argc, char *argv[]) {
 
 //Function to convert the file specified in the command line
 //into the string to be iterated
-void convertFiletoString(string fileName) {
+void yyconvertFiletoString(string fileName) {
 	ifstream fileToOpen(fileName);
 	if (fileToOpen.is_open())
 	{
@@ -171,11 +173,29 @@ Token yylex() {
 		else if (isdigit(*currPos)) {
 			string toAppend;
 			thisToken.TokenNum = NUMCONST;
+			bool decFound = false;
 			do {
+				if(*currPos == '.') {
+					currPos++;
+					if(!isdigit(*currPos)) {
+						throw exception("Received an unexpected symbol after the decimal for NUMCONST");
+					}
+					else {
+						currPos--;
+					}
+				}
 				toAppend = *currPos;
 				thisToken.TokenString.append(toAppend); //add current character to TokenString Buffer
 				currPos++;
-			} while(isdigit(*currPos) || *currPos == '.'); //checks if next value is a digit or decimal
+			} while((isdigit(*currPos) || *currPos == '.') && !decFound); //checks if next value is a digit or decimal
+			//if next falue is a decimal
+			currPos++;
+			if(*currPos == '.') {
+				throw exception("Received an unexpected second decimal after recognizing NUMCONST");
+			}
+			else {
+				currPos--;
+			}
 			tokenFound = true;
 		}
 		//ID or READSY or WRITESY
@@ -248,6 +268,14 @@ Token yylex() {
 				} while (isalpha(*currPos) || isdigit(*currPos) || *currPos == '_');
 				tokenFound = true;
 			}		
+		}
+		//If fell off the end of the inputfile
+		else if (currPos == inputFile.end()) {
+			throw exception("Fell off the end of the file");
+		}
+		//If a character found is not recognized
+		else {
+			throw exception("Received character was not recognized by the scanner");
 		}
 	} while (!tokenFound);
 	cout << "Token: " << setfill('0') << setw(2) << thisToken.TokenNum << " " << TOKENMAP[thisToken.TokenNum] << " (" << thisToken.TokenString << ")" << endl;
