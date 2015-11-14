@@ -27,16 +27,16 @@ int main(int argc, char *argv[]) {
 	} 
 	//else if (argc == 1) {
 		//==DEBUG TESTING==
-		//inputFile = "read A jeff_224 := 2.5 + 4 Write jeff /* comment * **/ \n /* \n rEAd B /**/ B := \t 2 / 5 qq22qq:=1+1.5975/2 ";
+		//inputFile = "read A jeff_224 := 2.5 + 40zz Write jeff read readFile /* comment * **/ \n /* \n rEAd B /**/ B := \t 2 / 5 qq22qq:=1+1.5975/2 ";
 		//inputFile += "sum := A + B write sum $$";
 	//}
-	
+	//else {
 	string fileName = argv[1];
 	yyconvertFiletoString(fileName);
 	cout << "====INPUT FILE====" << endl;
-	cout << inputFile << endl;
+	cout << inputFile << endl; 
 	cout << "====SCANNER OUTPUT====" << endl;
-	
+	//}
 	currPos = inputFile.begin();
 
 	while (!endOfFile) {
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 		} 
 		catch (exception& e) 
 		{
-			cout << e.what() << endl;
+			cout << "***" << e.what() << endl;
 			cout << "==Halting Program==" << endl;
 			return 0;
 		}
@@ -74,6 +74,8 @@ void yyconvertFiletoString(string fileName) {
 	else cout << "File Open error" << endl;
 }
 
+
+//Function to iterate through the file and find the next token
 Token yylex() {
 	bool tokenFound = false;	
 	Token thisToken;
@@ -189,89 +191,39 @@ Token yylex() {
 				currPos++;
 			} while((isdigit(*currPos) || *currPos == '.') && !decFound); //checks if next value is a digit or decimal
 			//if next falue is a decimal
-			currPos++;
-			if(*currPos == '.') {
-				throw exception("Received an unexpected second decimal after recognizing NUMCONST");
-			}
-			else {
-				currPos--;
-			}
+			if(isalpha(*currPos)) {
+				cout << "***Did not encounter a delimiter after reading NUMCONST \n***Parsing next sequence as NUMCONST then ID" << endl;								
+			}			
 			tokenFound = true;
 		}
 		//ID or READSY or WRITESY
 		else if (isalpha(*currPos)) {
 			string toAppend;
-			if (tolower(*currPos) == 'r') {
+			do {
+				toAppend = *currPos;
+				thisToken.TokenString.append(toAppend);
 				currPos++;
-				if (tolower(*currPos) == 'e') {
-					currPos++;
-					if (tolower(*currPos) == 'a') {
-						currPos++;
-						if (tolower(*currPos) == 'd') {
-							currPos++;
-							thisToken.TokenNum = READYSY;
-							thisToken.TokenString = "read";
-							tokenFound = true;							
-						}
-						else {
-							currPos--; currPos--; currPos--; //revert the last 3 increments
-						}
-					}
-					else {
-						currPos--; currPos--; //revert the last 2 increments
-					}
-				}
-				else {
-					currPos--;
-				}
+			} while (isalpha(*currPos) || isdigit(*currPos) || *currPos == '_');
+			tokenFound = true;	
+			if (iequals(thisToken.TokenString, "read")) {
+				thisToken.TokenNum = READYSY;
+				thisToken.TokenString = "read";
 			}
-			else if (tolower(*currPos) == 'w') {
-				currPos++;
-				if (tolower(*currPos) == 'r') {
-					currPos++;
-					if (tolower(*currPos) == 'i') {
-						currPos++;
-						if (tolower(*currPos) == 't') {
-							currPos++;
-							if (tolower(*currPos) == 'e') {
-								currPos++;
-								thisToken.TokenNum = WRITESY;
-								thisToken.TokenString = "write";
-								tokenFound = true;								
-							}
-							else {
-								for (int i = 0; i < 4; i++)
-									currPos--;
-							}
-						}
-						else {
-							for (int i = 0; i < 3; i++)
-								currPos--;
-						}
-					}
-					else {
-						for (int i = 0; i < 2; i++)
-							currPos--;
-					}
-				}
-				else {
-					currPos--;
-				}
+			else if (iequals(thisToken.TokenString, "write")) {
+				thisToken.TokenNum = WRITESY;
+				thisToken.TokenString = "write";
 			}
-			if (!tokenFound) {
-				//now I have to just get an ID string
+			else {
 				thisToken.TokenNum = ID;
-				do {
-					toAppend = *currPos;
-					thisToken.TokenString.append(toAppend);
-					currPos++;
-				} while (isalpha(*currPos) || isdigit(*currPos) || *currPos == '_');
-				tokenFound = true;
-			}		
+			}			
 		}
 		//If fell off the end of the inputfile
 		else if (currPos == inputFile.end()) {
-			throw exception("Fell off the end of the file");
+			thisToken.TokenNum = EOFSY;
+			thisToken.TokenString = "$$";
+			tokenFound = true;
+			endOfFile = true;
+			cout << "***EOF symbol not found, appending with EOFSY" << endl;
 		}
 		//If a character found is not recognized
 		else {
