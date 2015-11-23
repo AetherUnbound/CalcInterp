@@ -17,26 +17,26 @@ Token yylex(); //might be global variables here
 void yyconvertFiletoString(string);
 
 int main(int argc, char *argv[]) {
-	setupMap(); //sets up the map to pring ENUM names
+	setupMap(); //sets up the map to print ENUM names
 	
 
 	//Get the filename from the command line 
-	if (argc > 2 || argc == 1) {
+	if (argc > 2 ) { //|| argc == 1) {
 		cerr << "Usage: " << argv[0] << " FILENAME" << endl;
 		return 1;
 	} 
-	//else if (argc == 1) {
+	else if (argc == 1) {
 		//==DEBUG TESTING==
-		//inputFile = "read A jeff_224 := 2.5 + 40zz Write jeff read readFile /* comment * **/ \n /* \n rEAd B /**/ B := \t 2 / 5 qq22qq:=1+1.5975/2 ";
-		//inputFile += "sum := A + B write sum $$";
-	//}
-	//else {
+		inputFile = "read A jeff_224 := 2.5 + 40zz Write jeff read readFile /* comment * **/ \n /* \n rEAd B /**/ B := \t (2 / 5) qq22qq:=1+1.5975/2 ";
+		inputFile += "sum := A + B write sum";
+	}
+	else {
 	string fileName = argv[1];
 	yyconvertFiletoString(fileName);
 	cout << "====INPUT FILE====" << endl;
 	cout << inputFile << endl; 
 	cout << "====SCANNER OUTPUT====" << endl;
-	//}
+	}
 	currPos = inputFile.begin();
 
 	while (!endOfFile) {
@@ -74,6 +74,19 @@ void yyconvertFiletoString(string fileName) {
 	else cout << "File Open error" << endl;
 }
 
+//Set simple tokens via function
+bool setToken(Token& thisToken, CALCTOKENS OP, string tString = "") {
+	thisToken.TokenNum = OP;
+	if(tString.length() == 0) {
+		thisToken.TokenString = *currPos;
+	}
+	else {
+		thisToken.TokenString = tString;
+	}
+	currPos++;
+	return true;
+}
+
 
 //Function to iterate through the file and find the next token
 Token yylex() {
@@ -87,70 +100,38 @@ Token yylex() {
 		}
 		//LPAREN 
 		else if ((*currPos) == '(') { 
-			thisToken.TokenNum = LPAREN;
-			thisToken.TokenString = *currPos;
-			currPos++; //move on to next char
-			tokenFound = true; //break loop
+			tokenFound = setToken(thisToken, LPAREN);
 		}
 		//RPAREN 
 		else if (*currPos == ')') { 
-			thisToken.TokenNum = RPAREN;
-			thisToken.TokenString = *currPos;
-			currPos++;
-			tokenFound = true;
+			tokenFound = setToken(thisToken, RPAREN);
 		}
 		//ADDOP 
 		else if (*currPos == '+') { 
-			thisToken.TokenNum = ADDOP;
-			thisToken.TokenString = *currPos;
-			currPos++;
-			tokenFound = true;
+			tokenFound = setToken(thisToken, ADDOP);
 		}
 		//MINOP 
 		else if (*currPos == '-') { 
-			thisToken.TokenNum = MINOP;
-			thisToken.TokenString = *currPos;
-			currPos++;
-			tokenFound = true;
+			tokenFound = setToken(thisToken, MINOP);
 		}
 		//MULTOP 
 		else if (*currPos == '*') { 
-			thisToken.TokenNum = MULTOP;
-			thisToken.TokenString = *currPos;
-			currPos++;
-			tokenFound = true;
+			tokenFound = setToken(thisToken, MULTOP);
 		}
 		//ASSIGNSY
 		else if (*currPos == ':') {
 			currPos++; //increment to check next value
 			if (*currPos == '=') {
-				thisToken.TokenNum = ASSIGNSY;
-				thisToken.TokenString = ":=";
-				tokenFound = true;
-				currPos++;
+				tokenFound = setToken(thisToken, ASSIGNSY, ":=");
 			}
 			else //in case there is bad input after ':'
 				throw exception("Received an unexpected character after the initial character for ASSIGNSY");
-		}
-		//EOFSY
-		else if (*currPos == '$') {
-			currPos++; //increment to check next value
-			if (*currPos == '$') {
-				thisToken.TokenNum = EOFSY;
-				thisToken.TokenString = "$$";
-				tokenFound = true;
-				endOfFile = true;
-			}
-			else //in case there is bad input after '$'
-				throw exception("Received an unexpected character after the initial character for EOFSY");
 		}
 		//DIVOP & Comment checking
 		else if (*currPos == '/') {
 			currPos++; //be wary of this increment!
 			if (*currPos != '*') { //if it's a valid DIVOP				
-				thisToken.TokenNum = DIVOP;
-				thisToken.TokenString = '/'; 
-				tokenFound = true;
+				tokenFound = setToken(thisToken, DIVOP, "/");
 			}
 
 			//Previously had GOTO statements, reimplemented with loops
@@ -177,7 +158,12 @@ Token yylex() {
 			thisToken.TokenNum = NUMCONST;
 			bool decFound = false;
 			do {
-				if(*currPos == '.') {
+				//Checks input to see if a decimal has already been found in a single NUMCONST
+				if(*currPos == '.' && decFound) {
+					throw exception("Received a NUMCONST with multiple decimal points");
+				}
+				else if (*currPos == '.') {
+					decFound = true;
 					currPos++;
 					if(!isdigit(*currPos)) {
 						throw exception("Received an unexpected symbol after the decimal for NUMCONST");
@@ -189,7 +175,7 @@ Token yylex() {
 				toAppend = *currPos;
 				thisToken.TokenString.append(toAppend); //add current character to TokenString Buffer
 				currPos++;
-			} while((isdigit(*currPos) || *currPos == '.') && !decFound); //checks if next value is a digit or decimal
+			} while((isdigit(*currPos) || *currPos == '.')); //checks if next value is a digit or decimal
 			//if next falue is a decimal
 			if(isalpha(*currPos)) {
 				cout << "***Did not encounter a delimiter after reading NUMCONST \n***Parsing next sequence as NUMCONST then ID" << endl;								
@@ -219,11 +205,8 @@ Token yylex() {
 		}
 		//If fell off the end of the inputfile
 		else if (currPos == inputFile.end()) {
-			thisToken.TokenNum = EOFSY;
-			thisToken.TokenString = "$$";
-			tokenFound = true;
+			tokenFound = setToken(thisToken, EOFSY, "$$");
 			endOfFile = true;
-			cout << "***EOF symbol not found, appending with EOFSY" << endl;
 		}
 		//If a character found is not recognized
 		else {
