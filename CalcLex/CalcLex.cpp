@@ -132,6 +132,7 @@ Token yylex() {
 			currPos++; //be wary of this increment!
 			if (*currPos != '*') { //if it's a valid DIVOP				
 				tokenFound = setToken(thisToken, DIVOP, "/");
+				currPos--;
 			}
 
 			//Previously had GOTO statements, reimplemented with loops
