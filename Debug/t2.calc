@@ -1,0 +1,2 @@
+read A jeff_224 := 2.5 + 40zz Write jeff read readFile /* comment * **/ /* rEAd B /**/ B := (2 / 5) qq22qq:=1+1.5975/2 
+sum := A + B write sum
